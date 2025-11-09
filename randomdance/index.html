@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>跑馬燈抽獎</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100%;
+      padding: 40px 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 48px 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 42px;
+      margin: 0 0 16px 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .lottery-display {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 60px 32px;
+      margin: 32px 0;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #e9ecef;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lottery-text {
+      font-size: 32px;
+      font-weight: bold;
+      color: #495057;
+      transition: all 0.1s ease;
+    }
+
+    .lottery-text.spinning {
+      animation: spin 0.1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(-10px); opacity: 0.5; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    .lottery-text.winner {
+      color: #667eea;
+      font-size: 36px;
+      animation: celebrate 0.6s ease-out;
+    }
+
+    @keyframes celebrate {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .start-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 18px 48px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      margin-bottom: 32px;
+    }
+
+    .start-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    .start-button:active {
+      transform: translateY(0);
+    }
+
+    .start-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding-top: 24px;
+      border-top: 2px solid #e9ecef;
+    }
+
+    .social-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      border: 2px solid;
+    }
+
+    .social-button.youtube {
+      background: #FF0000;
+      color: white;
+      border-color: #FF0000;
+    }
+
+    .social-button.youtube:hover {
+      background: #cc0000;
+      border-color: #cc0000;
+      transform: translateY(-2px);
+    }
+
+    .social-button.facebook {
+      background: #1877F2;
+      color: white;
+      border-color: #1877F2;
+    }
+
+    .social-button.facebook:hover {
+      background: #0d65d9;
+      border-color: #0d65d9;
+      transform: translateY(-2px);
+    }
+
+    .social-button.instagram {
+      background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      color: white;
+      border-color: #bc1888;
+    }
+
+    .social-button.instagram:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: #667eea;
+      position: absolute;
+      animation: confetti-fall 3s linear forwards;
+    }
+
+    @keyframes confetti-fall {
+      to {
+        transform: translateY(100%) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="container">
+   <h1 id="main-title">🎉 影片抽獎時間 🎉</h1>
+   <div class="lottery-display">
+    <div class="lottery-text" id="lottery-text">
+     準備開始...
+    </div>
+   </div><button class="start-button" id="start-button">開始抽獎</button>
+   <div class="social-links"><a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="social-button youtube"> <span>▶️</span> <span id="youtube-label">YouTube</span> </a> <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="social-button facebook"> <span>📘</span> <span id="facebook-label">Facebook</span> </a> <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-button instagram"> <span>📷</span> <span id="instagram-label">Instagram</span> </a>
+   </div>
+  </div>
+  <script>
+    const videos = [
+      { name: '精彩回顧 2024', url: 'https://youtube.com/watch?v=example1' },
+      { name: '幕後花絮特輯', url: 'https://youtube.com/watch?v=example2' },
+      { name: '粉絲見面會', url: 'https://youtube.com/watch?v=example3' },
+      { name: '年度精選集錦', url: 'https://youtube.com/watch?v=example4' },
+      { name: '獨家訪談內容', url: 'https://youtube.com/watch?v=example5' },
+      { name: '特別企劃影片', url: 'https://youtube.com/watch?v=example6' }
+    ];
+
+    const defaultConfig = {
+      main_title: '🎉 影片抽獎時間 🎉',
+      button_text: '開始抽獎',
+      youtube_label: 'YouTube',
+      facebook_label: 'Facebook',
+      instagram_label: 'Instagram',
+      primary_color: '#667eea',
+      secondary_color: '#764ba2',
+      background_color: '#f8f9fa',
+      text_color: '#495057',
+      button_color: '#667eea'
+    };
+
+    let isSpinning = false;
+    let spinInterval;
+
+    const startButton = document.getElementById('start-button');
+    const lotteryText = document.getElementById('lottery-text');
+
+    startButton.addEventListener('click', startLottery);
+
+    function startLottery() {
+      if (isSpinning) return;
+      
+      isSpinning = true;
+      startButton.disabled = true;
+      startButton.textContent = '抽獎中...';
+      lotteryText.classList.add('spinning');
+      lotteryText.classList.remove('winner');
+
+      let counter = 0;
+      spinInterval = setInterval(() => {
+        const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+        lotteryText.textContent = randomVideo.name;
+        counter++;
+
+        if (counter > 30) {
+          clearInterval(spinInterval);
+          finishLottery();
+        }
+      }, 100);
+    }
+
+    function finishLottery() {
+      const winner = videos[Math.floor(Math.random() * videos.length)];
+      lotteryText.classList.remove('spinning');
+      lotteryText.classList.add('winner');
+      lotteryText.textContent = winner.name;
+      
+      createConfetti();
+
+      setTimeout(() => {
+        //window.open(winner.url, '_blank', 'noopener,noreferrer');
+        window.location.href = winner.url;
+        resetLottery();
+      }, 2000);
+    }
+
+    function resetLottery() {
+      isSpinning = false;
+      startButton.disabled = false;
+      startButton.textContent = window.elementSdk?.config?.button_text || defaultConfig.button_text;
+      
+      setTimeout(() => {
+        lotteryText.classList.remove('winner');
+        lotteryText.textContent = '準備開始...';
+      }, 500);
+    }
+
+    function createConfetti() {
+      const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe'];
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + '%';
+          confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.animationDelay = Math.random() * 0.5 + 's';
+          document.body.appendChild(confetti);
+          
+          setTimeout(() => confetti.remove(), 3000);
+        }, i * 30);
+      }
+    }
+
+    async function onConfigChange(config) {
+      const mainTitle = document.getElementById('main-title');
+      const youtubeLabel = document.getElementById('youtube-label');
+      const facebookLabel = document.getElementById('facebook-label');
+      const instagramLabel = document.getElementById('instagram-label');
+
+      mainTitle.textContent = config.main_title || defaultConfig.main_title;
+      if (!isSpinning) {
+        startButton.textContent = config.button_text || defaultConfig.button_text;
+      }
+      youtubeLabel.textContent = config.youtube_label || defaultConfig.youtube_label;
+      facebookLabel.textContent = config.facebook_label || defaultConfig.facebook_label;
+      instagramLabel.textContent = config.instagram_label || defaultConfig.instagram_label;
+
+      const primaryColor = config.primary_color || defaultConfig.primary_color;
+      const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+      const backgroundColor = config.background_color || defaultConfig.background_color;
+      const textColor = config.text_color || defaultConfig.text_color;
+
+      document.body.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+      mainTitle.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+      mainTitle.style.webkitBackgroundClip = 'text';
+      mainTitle.style.backgroundClip = 'text';
+      
+      const lotteryDisplay = document.querySelector('.lottery-display');
+      lotteryDisplay.style.background = backgroundColor;
+      lotteryText.style.color = textColor;
+      
+      startButton.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+
+      const customFont = config.font_family || defaultConfig.font_family;
+      if (customFont) {
+        const baseFontStack = "'Microsoft JhengHei', 'PingFang TC', sans-serif";
+        document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      }
+
+      const baseSize = config.font_size || 16;
+      mainTitle.style.fontSize = `${baseSize * 2.625}px`;
+      lotteryText.style.fontSize = `${baseSize * 2}px`;
+      startButton.style.fontSize = `${baseSize * 1.25}px`;
+      document.querySelectorAll('.social-button').forEach(btn => {
+        btn.style.fontSize = `${baseSize}px`;
+      });
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                config.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_color || defaultConfig.secondary_color,
+              set: (value) => {
+                config.secondary_color = value;
+                window.elementSdk.setConfig({ secondary_color: value });
+              }
+            },
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['main_title', config.main_title || defaultConfig.main_title],
+          ['button_text', config.button_text || defaultConfig.button_text],
+          ['youtube_label', config.youtube_label || defaultConfig.youtube_label],
+          ['facebook_label', config.facebook_label || defaultConfig.facebook_label],
+          ['instagram_label', config.instagram_label || defaultConfig.instagram_label]
+        ])
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99bc9eace0a256ef',t:'MTc2MjY4NDA3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
